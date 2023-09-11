@@ -1,0 +1,61 @@
+(clear-all)
+
+(define-model Drivebus
+
+  ;; Chunk type
+  (chunk-type drive state visual-cue)
+
+  ;; Declarative memories
+  (define-chunks
+    (goer isa drive state ready visual-cue blank)
+    (ready)
+    (start)
+    (looking-around)
+    (stop)
+    (blank)
+  )
+;; install device
+(install-device '("motor" "keyboard"))
+(add-visicon-features '(screen-x 2 screen-y 2 value center-line))
+  ;; Goal buffer
+  (goal-focus goer)
+
+  ;; Production rules
+(P ready
+   =goal>
+      ISA         drive
+      state       ready
+ ==>
+   +visual-location>
+      :attended    nil
+   =goal>
+      state        start
+)
+  (P look-around
+    =goal>
+      ISA    drive
+      state  start
+   =visual-location>
+   ?visual>
+      state       free
+  ==>
+    =goal>
+      state looking-around
+    +visual>
+      cmd         move-attention
+    screen-pos  =visual-location
+  )
+
+(P press-w-key
+    =goal>
+      ISA drive
+      state looking-around
+    =visual>
+      value   center-line
+  ==>
+    !output! ("Pressing W key")
+    !eval! (output-key "W")
+    =goal>
+      state stop
+  )
+)
