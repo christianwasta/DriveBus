@@ -1,0 +1,53 @@
+(clear-all)
+
+(define-model Drivebus
+
+  ;; Chunk type
+  (chunk-type drive state visual-cue)
+
+  ;; Declarative memories
+  (define-chunks
+    (goer isa drive state start visual-cue blank)
+    (start)
+    (ahead)
+    (stop)
+    (blank)
+  )
+
+  ;; Goal buffer
+  (goal-focus goer)
+
+  ;; Production rules
+  (p look-around
+    =goal>
+      ISA drive
+      state start
+  ==>
+    =goal>
+      state move-attention
+    +visual>
+      visual-cue "center-lane"
+  )
+
+  (p press-w-key
+    =goal>
+      ISA drive
+      state move-attention
+    =visual>
+      visual-cue "center-lane"
+    ?manual>
+      state    free
+
+  ==>
+    !output! ("Pressing W key")
+    !eval! (output-key "W")
+    +manual>
+        ISA     punch
+        hand    right
+        finger  index
+
+    =goal>
+      state stop
+  )
+
+)

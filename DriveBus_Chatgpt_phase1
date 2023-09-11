@@ -1,0 +1,32 @@
+(clear-all)
+
+(define-model Drivebus
+
+;; Chunk type
+(chunk-type drive state visual-cue)
+
+;; Declarative memories
+(define-chunks
+  (goer isa drive state start visual-cue center-lane)(start)(looking-around)(center-lane)
+)
+
+;; Goal buffer
+(goal-focus goer)
+
+;; Production rules
+(p look-around
+  =goal>
+    ISA drive
+    state start
+  =visual-location>
+  ?visual>
+      state       free
+==>
+  =goal>
+    state looking-around
+  +visual>
+    cmd         move-attention
+    screen-pos  =visual-location
+
+)
+)
