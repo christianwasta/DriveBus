@@ -226,7 +226,7 @@
 	  ?manual>
       state      free
 	 ==>
-	 !bind! =x (what-is-on-screen '("win" "lose"))
+	 !bind! =x (WHAT-IS-ON-SCREEN '("win" "lose"))
 	  =goal>
 	  isa 	try-strategy
 	  state	attending

@@ -29,9 +29,9 @@
 ;;File addresses
 
 ;; The directory
-(defvar pythonaddress "C:\\Users\\sfw5621\\Desktop\\VisiTor-main\\VisiTor.py")
+(defvar pythonaddress "C:\\Users\\seanw\\OneDrive\\Desktop\\Drivebus\\VisiTor-main\\VisiTor.py")
 ;;======================================================================
-(defvar Direc "C:\\Users\\sfw5621\\Desktop\\VisiTor-main\\files2")
+(defvar Direc "C:\\Users\\seanw\\OneDrive\\Desktop\\Drivebus\\VisiTor-main\\")
 
 ;;; Start up the simulation (emacs lisp commands)
 ;;; How to send a command to Python running with us? right? why is this a method

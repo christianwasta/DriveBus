@@ -3,7 +3,7 @@ if __name__== "__main__":
 # gets the environment of the game:
     pygame.init()
     screenshot = ImageGrab.grab()
-    screenshot.save('screen.png', 'PNG')  # Equivalent to `screenshot.save(filepath, format='PNG')`
+    screenshot.save('environment.png', 'PNG')  # Equivalent to `screenshot.save(filepath, format='PNG')`
     input_loc = 'screen.png'
     output_loc = 'environment.png'
     print("please determine your environment")
@@ -15,10 +15,10 @@ if __name__== "__main__":
         left, right = right, left
     if lower < upper:
         lower, upper = upper, lower
-    im = Image.open(input_loc)
+    im = PIL.Image.open(input_loc)
     im = im.crop((left, upper, right, lower))
     pygame.display.quit()
-    im.save(output_loc)
+    im.save(output_loc, format='PNG', compress_level=0)
     env_top_point = (upper, left)
     # to get choices:
     choices = list()
@@ -53,7 +53,7 @@ if __name__== "__main__":
                     im = Image.open(input_loc)
                     im = im.crop(( left, upper, right, lower))
                     pygame.display.quit()
-                    im.save(output_loc)
+                    im.save(output_loc, format='PNG', compress_level=0)
                     env_top_point.append((int((upper+lower)/2),int((left+right)/2)))
                 else:
                     ans =input("do you want to save the data?[Y/N]")
@@ -87,8 +87,8 @@ if __name__== "__main__":
                 left, right = right, left
             if lower < upper:
                 lower, upper = upper, lower
-            im = Image.open(input_loc)
+            im = PIL.Image.open(input_loc)
             im = im.crop(( left, upper, right, lower))
             pygame.display.quit()
-            im.save(output_loc)
+            im.save(output_loc, format='PNG', compress_level=0)
             env_top_point.append((int((upper+lower)/2),int((left+right)/2)))

@@ -1,5 +1,3 @@
-(ql:quickload 'inferior-shell)
-(use-package 'inferior-shell)
 ;;
 ;; Siyu Wu 20230312, contributors: Frank Ritter, Amirreza Bagherzadehkhorasani, please add your name here after you help with the model
 ;; Amir, this model still needs your help with writing defun whereis. Now when run the model it shows the whereis function didn't get defined
@@ -26,7 +24,7 @@
 ;; I.a  global variablles
 
 ;; define pattern variables
-
+(defvar shell-request-list nil "List of shell commands to execute")
 (defvar *mouse-pos* (vector 0 0))
 ;;
 (defvar pattern "")
@@ -54,7 +52,7 @@
 ;;To make sure everything goes smoothly, use windows. Mac is a little bit unreliable in interations
 (defvar pythonaddress "C:\\Users\\seanw\\OneDrive\\Desktop\\Drivebus\\VisiTor-main\\VisiTor.py")
 
-(defvar Direc "C:\\Users\\seanw\\OneDrive\\Desktop\\Drivebus\\VisiTor-main\\")
+(defvar Direc "C:\\Users\\seanw\\OneDrive\\Desktop\\Drivebus\\VisiTor-main")
 
 ;; load libraries
 (ql:quickload 'inferior-shell)
@@ -64,26 +62,19 @@
 ;;
 ;;; Start up the simulation (emacs lisp commands)
 ;;;
-(defvar shell-request-list nil "List of shell commands to execute")
 (defmethod call-ShellCommand (command &optional arglist)
-  (let* ((python-path "C:\\Users\\seanw\\AppData\\Local\\Microsoft\\WindowsApps\\python.exe")
-         (full-command (list python-path
-                             (symbol-value 'pythonaddress)
-                             command
-                             "--Dir"
-                             (symbol-value 'Direc)
-                             "--arg2"))
-         (full-command (append full-command (if (listp arglist) arglist (list arglist)))))
-    (format t "Executing command: ~S~%" full-command)
-    (multiple-value-bind (output error-output exit-code)
-        (uiop:run-program full-command :output :string :error-output :string :ignore-error-status t)
-      (format t "Python script output:~%~a~%" output)
-      (format t "Python script error output:~%~a~%" error-output)
-      (format t "Python script exit code: ~a~%" exit-code)
-      (if (= exit-code 0)
-          output
-          (error "Python script exited with error code ~a. Output: ~a Error: ~a" 
-                 exit-code output error-output)))))
+  (setq shell-request-list '())
+  (setq shell-request-list
+    (append shell-request-list
+      '("python")
+      (list (symbol-value 'pythonaddress))
+      (list (symbol-value 'command))
+      '("--Dir")
+      (list (symbol-value 'Direc))
+      '("--arg2")
+      arglist))
+  (inferior-shell:run/ss shell-request-list))
+
 (defun what-is-on-screen (s)
   "Match or MisMatch for screen s"
   ;; put these two variables into a let to make them local to this function only-fer
@@ -101,16 +92,8 @@
 ;  (print "done!")
   (act-r-output " Now we have pattern: ~s !!!!" *pattern-global*)
 )
-(defun get-key (l sublist)
-  "Finds a key given the pair of values associated with it"
-  ;; l is the list
-  ;; sublist if the associted sublist of the key
-  ;  (print "working")
-  (car (find-if (lambda (parts) (equal sublist (cadr parts))) l)))
-  ;; vould be (second parts) -fer
 
-
-(defun respond-to-move-cursor (z)
+(defun respond-to-move-cursor (_x _y z)
   ;; what are x, y, z?
   (setf command "movecursortopattern")
   (act-r-output "move-cursor to ~A!!!" z)
@@ -118,7 +101,8 @@
   ;(print (get-key visual-list (list (nth 0 z)(nth 1 z))))
   ;list output
   (act-r-output "Find in list move-cursor to ~a~%!!!" (get-key visual-list (list (nth 0 z)(nth 1 z))))
-  (call-ShellCommand command (list (get-key visual-list (list (nth 0 z)(nth 1 z)))))
+  (Let ((result (call-ShellCommand command (list (get-key visual-list (list (nth 0 z)(nth 1 z)))))))
+   (declare (ignore result)))
 )
 
 
@@ -138,34 +122,34 @@
 ;   (values x y))
 (defun where-is (s)
   (setf command "whereis")
-  (let* ((output (call-ShellCommand command s))
-         (lines (split-sequence:split-sequence #\Newline output))
-         (result-line (find "RESULT:" lines :test #'search))
-         (coords (when result-line 
-                   (read-from-string 
-                    (subseq result-line (+ (search "RESULT:" result-line) 7))))))
-    (if (and (listp coords) (= (length coords) 2))
-        (values (first coords) (second coords))
-        (progn
-          (print (format nil "Error parsing whereis output: ~A" output))
-          (values nil nil)))))
-
-(defun longkeypress (key)
+  (multiple-value-bind (x y)
+      (mapcar #'parse-integer
+              (split-string-by-comma
+               (strip-spaces-and-parentheses
+                (call-ShellCommand command s))))
+    (values x y))
+    )
+(defun longkeypress (x)
   (setf command "continuouspresskey")
-  (call-ShellCommand command (list key))
-  (act-r-output "continuwouspress a key! ~A" key))
+  (call-ShellCommand command x)
+  (act-r-output "continuouspress a key!"))
+  (longkeypress '("x"))
 
-(defun my-keyhold (model key)
-  (declare (ignore model))
-  (longkeypress key))
-
-(defun respond-to-click-mouse ()
+(defun respond-to-click-mouse (_x _y _z)
   ;; what are x, y, z?
   (setf command "click")
   (call-ShellCommand command '("temp")))
 ;  (setq (call-ShellCommand command '("temp")))
   (act-r-output "click a mouse!")
-  ;(respond-to-click-mouse)
+  (respond-to-click-mouse "temp" "temp" "temp")
+
+(defun get-key (l sublist)
+  "Finds a key given the pair of values associated with it"
+  ;; l is the list
+  ;; sublist if the associted sublist of the key
+  ;  (print "working")
+  (car (find-if (lambda (parts) (equal sublist (cadr parts))) l)))
+  ;; vould be (second parts) -fer
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -176,7 +160,7 @@
 ;; read about vanhalen and brown m&m's
 
 (clear-all)
-(print-visicon)
+
 (define-model desertBus
 
 (sgp :seed (10000 100))
@@ -198,13 +182,15 @@
 ;; combine visitor and act-r commands
 (add-act-r-command "my-move-attention" 'what-is-on-screen "sth") ;; Good
 (monitor-act-r-command "move-attention" "my-move-attention") ;; Good
-(add-act-r-command "my-keyhold" 'my-keyhold "Keypress command")
+(add-act-r-command "my-keyhold" 'longkeypress  "sth")  ;;Define it ; Siyu: done
 (monitor-act-r-command "output-key" "my-keyhold") ;;Good
 (add-act-r-command "my-whereis" 'whereis "sth")  ;;Define it
   (monitor-act-r-command "start-tracking" "my-whereis") ;;Good
   (start-hand-at-key 'right "w")  ;;Amir: Really uncomfortable posture!!
-  (add-visicon-features '(screen-x 10 screen-y 10 value DrivingCueDanger))
   (add-visicon-features '(screen-x 2 screen-y 2 value drivingCueTest))
+  (add-visicon-features '(screen-x 10 screen-y 10 value DrivingCueDanger))
+
+
 ;;Put drive into the goal buffer
 (goal-focus goer)
 
@@ -226,17 +212,15 @@
    =goal>
       ISA         drive
       state       perceive
-==>
-   !eval! (progn
-            (model-output "Visicon contents:")
-            (print-visicon))
+ ==>
+     ;?visual-location>
+     ;  ISA         visual-location
+     ; :attended   nil
    =goal>
       state       move-attention
       item        "drivingCueTest"
-   +visual-location>
-      ISA         visual-location
-   !output! ("Perceiving environment")
-)
+      )
+
 
 ;;if drivingCue is found, go ahead, w is accelerate
   ;;Divide rule into two different production rules. You first find the cue and then press the key. They don't happen at the same time... Or maybe you think they will. If so, I'm fine with it.
@@ -268,7 +252,7 @@
        state    free
 ==>
  !output!   ("hiii")
- !eval! (longkeypress "w")
+ !eval! (longkeypress '("w"))
    +manual>
       ISA     punch
       hand    right
@@ -286,11 +270,10 @@
    =visual-location>
       value      drivingCueTest
 ==>
-    +visual-location>  ; Request a new visual location
-    =goal>
-       state      choose-strategy
-    !output! ("Rechecking environment")
-)
+    ; +visual-location>
+    ; buffer     empty
+   =goal>
+       state      choose-strategy)
 
 (p danger
    =goal>
@@ -333,128 +316,106 @@
       state     whereis)
 
 ;;get the x-axis location of DrivingCueDanger
-(p whereisdanger
+(p whereisDanger
    =goal>
       ISA       drive
       state     whereis
-   ?imaginal>
+  ?imaginal>
+      buffer    empty
       state     free
 ==>
-   !mv-bind! (=a =b) (where-is '("DrivingCueDanger"))
-   !output! ("WHERE-IS returned: ~S ~S" =a =b)
+      !mv-bind! (=a  =b) (first (where-is '("DrivingCueDanger")))
+;      !output! (=a)
+
    =goal>
       state    whereisnext
    +imaginal>
-      isa      encoding
-      danger-x =a
-      danger-y =b
-)
+       isa      encoding
+       a-loc   =a)
 
-(p whereiscenter
+;;get the x-axis location of center yellow dash.
+;; Amir: Don't we need to declare that the b-loc value is nil in the definiiton of the encoding to make sure the default value is nil?
+;; Amir: I'm not sure though. But I suggest checking it
+(p whereisCenter
    =goal>
       ISA      drive
       state    whereisnext
    =imaginal>
       isa     encoding
-      danger-x =a
-      danger-y =b
+      a-loc   =a
+      b-loc   nil
 ==>
-   !mv-bind! (=c =d) (where-is '("drivingCueTest"))
+      !mv-bind! (=c  =d) (first (where-is'("drivingCueTest")))
    =goal>
       state   calculate-deviation
-   =imaginal>
-      isa     encoding
-      danger-x =a
-      danger-y =b
-      center-x =c
-      center-y =d
-)
+      +imaginal>
+         isa     encoding
+         a-loc   =a
+         b-loc   =c)
 
+;; caculate the difference between the two x-axis locations
 (p calculate-deviation
   =goal>
    isa  drive
    state calculate-deviation
   =imaginal>
-   danger-x =a
-   center-x =c
+   a-loc   =a
+   b-loc   =c
+  ?visual>
+   state free
 ==>
-   !bind! =val (- =c =a)
-   =imaginal>
-      isa      encoding
-      deviation =val
+   !bind! =val(- =a =c)
+=imaginal>
+   deviation =val
    =goal>
-      state   consider-next
-   !output! ("Calculated deviation: ~D" =val)
-)
+   state   consider-next)
 
-(p handle-missing-cue
- =goal>
-   isa  drive
-   state consider-next
- =imaginal>
-   isa encoding
-   danger-x -1
-   center-x -1
-==>
- !eval! (longkeypress "w")
- =goal>
-   state  perceive
- +visual-location>
-   isa  visual-location
- !output! ("Both cues missing, moving forward")
-)
-
+;; if difference smaller and equal to 800 pixcel, keep ahead,then loop to perceive the environment
 (p consider-ahead
  =goal>
    isa  drive
    state consider-next
- =imaginal>
+=imaginal>
    isa encoding
-   danger-x =a
-   center-x =c
-   deviation =dev
-==>
- !eval! (cond ((= =a -1) (longkeypress "w"))
-              ((= =c -1) (longkeypress "a"))
-              ((> =dev 300) (longkeypress "a"))
-              (t (longkeypress "w")))
- !eval! (longkeypress "w")             
- =goal>
-   state  perceive
- +visual-location>
-   isa  visual-location
- !output! ("Decision made: ~A, deviation: ~D" 
-           (cond ((= =a -1) "move forward (left cue missing)")
-                 ((= =c -1) "steer left (right cue missing)")
-                 ((> =dev 300) "steer left")
-                 (t "move forward"))
-           =dev)
-)
-
-
-(p choose-steer
- =goal>
-   isa  drive
-   state choose-steer
- ?manual>
+   <= deviation 200
+   ?visual>
    state  free
-==>
- !eval! (longkeypress "a")
- =goal>
-   state  perceive
- +visual-location>
-   isa  visual-location
- !output! ("Steering left by pressing 'a'")
-)
+   ?manual>
+   state  free
+ ==>
+!eval! (longkeypress '("w"))
+   +manual>
+      ISA         punch
+      hand        right
+      finger      index
+   =goal>
+   state       perceive
+   +visual-location>
+   )
 
-(p continue-cycle
+;; if difference larger than 800 pixcel, steer left, then loop to perceive the environment
+(p consider-steer
+=goal>
+   isa  drive
+   state consider-next
+=imaginal>
+   isa encoding
+   > deviation 200
+   ?visual>
+   state  free
+   ?manual>
+   state  free
+ ==>
+!eval! (longkeypress '("a"))
+   +manual>
+      ISA        punch
+      hand      right
+      finger    index
+     
    =goal>
-      ISA         drive
-      state       perceive
-==>
-   =goal>
-      state       choose-strategy
-   !output!       ("Continuing cycle - choosing new strategy")
-)
+   state       perceive
+   +visual-location>
+   )
+
 )
 ;;Amir: Overall, great code. You have made some huge progress! I'm impressed.

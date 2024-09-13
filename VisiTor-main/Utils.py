@@ -1,6 +1,7 @@
 
 import sys #Read arguements
 import pyautogui #Finds Patterns, click and keyboard stuff
+import time
 from time import sleep # To simulate pause
 import numpy as np  # Matrix stuff
 import os # For moving between folders and stuff
@@ -11,6 +12,7 @@ from PIL import Image
 from tkinter import *# For GUI i saving files
 from PIL import ImageGrab,ImageTk
 import PIL
+import PIL.Image
 import pygame #Gets mouse position and stuff
 from tkinter import filedialog # GUI stuff
 import glob #finds specific types of files
@@ -19,7 +21,11 @@ from tkinter import filedialog as fd
 import random
 import win32gui
 import win32con
-from TemplateMatching import *
+import win32api
+import tkinter as tkinter
+from tkinter import filedialog as fd
+import logging
+#from TemplateMatching import *
 
 width = 1920 #self.winfo_screenwidth()
 height = 1080 #self.winfo_screenheight()
@@ -40,7 +46,14 @@ root.geometry('%dx%d' % (width, height))
 
 
 # Create an object of tkinter ImageTk
-img = PIL.Image.open("JSegManEye.jpg")
+script_dir = os.path.dirname(os.path.abspath(__file__))
+img_path = os.path.join(script_dir, "JSegManEye.jpg")
+try:
+    img = PIL.Image.open(img_path)
+except FileNotFoundError:
+    logging.error(f"Could not find image file at {img_path}")
+    # You might want to use a default image or skip this part if the image is not found
+    img = None
 resize_image = img.resize((50, 50))
 
 img = ImageTk.PhotoImage(resize_image)
@@ -95,6 +108,17 @@ def keypress(key, time = 0.1):
     pyautogui.keyUp(key)
 
 
+def longkeypress(key, duration=1):
+    try:
+        logging.info(f"Attempting to press key: {key}")
+        pyautogui.keyDown(key)
+        sleep(duration)
+        pyautogui.keyUp(key)
+        logging.info(f"Key press completed for: {key}")
+    except Exception as e:
+        logging.exception(f"Error in longkeypress function: {e}")
+        raise
+
 # Click at a specific location of the screen
 def click():
 #If you want mouse down and up to take more time
@@ -109,7 +133,7 @@ def locate_pic(filename):
     pic=None
     while pic is None:
         root.update_idletasks()
-        conf = .8
+        conf = .9
         while conf>0.5:
             try:
                 pic = pyautogui.locateOnScreen(filename,confidence=conf)
@@ -118,6 +142,10 @@ def locate_pic(filename):
                 conf*=0.9
         return pic
 # finding the location of a pattern using opencv and rescaling
+def matching(filename):
+    # TODO: Implement OpenCV template matching here
+    print(f"OpenCV matching not implemented for {filename}")
+    return None
 def locate_pic_CV(filename):
     pic = matching(filename)
     return pic
@@ -130,14 +158,36 @@ def find_file(address,filename):
     return arr[0]
 #Finds the location of a pattern
 def whereis(path):
-    pic = locate_pic(path)
-    if pic ==None:
-        return "Pattern doesn't exist"
+    print(f"Searching for file: {path}")
+    pic = None
+    # If the path doesn't have an extension, try both .png and .jpg
+    if not os.path.splitext(path)[1]:
+        for ext in ['.png', '.jpg']:
+            full_path = path + ext
+            print(f"Trying path: {full_path}")
+            if os.path.exists(full_path):
+                print(f"File found: {full_path}")
+                pic = locate_pic(full_path)
+                if pic is not None:
+                    break
+            else:
+                print(f"File not found: {full_path}")
     else:
-        x = pic[0]+pic[2]/2
-        y = pic[1]+pic[3]/2
-        naturaleyemove((x,y))
-        return x,y
+        full_path = path
+        print(f"Trying path: {full_path}")
+        if os.path.exists(full_path):
+            print(f"File found: {full_path}")
+            pic = locate_pic(full_path)
+        else:
+            print(f"File not found: {full_path}")
+    
+    if pic is None:
+        return "(-1 -1)"  # Return a tuple-like string that Lisp can parse
+    else:
+        x, y = pic.left + pic.width / 2, pic.top + pic.height / 2
+        print(f"Pattern found at: ({x}, {y})")
+        return f"({x} {y})"  # Return a tuple-like string that Lisp can parse
+    
 #Finds the location of the top corner of a pattern
 def whereis_top(path):
     pic = locate_pic(path)
@@ -267,10 +317,9 @@ def mainLoop(screen, px):
 def filefinder(text):
     #print(text)
     sleep(1)
-    root = tkinter.Tk()
+    root = tk.Tk()
     root.withdraw() #use to hide tkinter window
 
-    root = tk.Tk()
     root.title('Tkinter Open File Dialog')
     root.resizable(False, False)
     root.geometry('300x150')
@@ -282,6 +331,7 @@ def filefinder(text):
         title='Open files',
         initialdir='/',
         filetypes=filetypes)
+    root.destroy()
     return filenames
 #=================
 # User selects where they have saved their files

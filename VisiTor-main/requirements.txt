@@ -1,8 +1,8 @@
 mouse==0.7.1
-numpy==1.19.5
-Pillow==9.0.1
-PyAutoGUI==0.9.53
-pygame==2.1.2
+numpy==1.26.4
+Pillow==10.3.0
+PyAutoGUI==0.9.54
+pygame==2.5.2
 pykeyboard==0.1.5
-PyUserInput==0.1.10
+PyUserInput==0.1.11
 pywin32==223

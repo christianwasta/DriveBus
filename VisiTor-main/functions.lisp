@@ -8,9 +8,9 @@
 ;;File address
 
 ;; The directory
-(defvar pythonaddress "c://Users//Amirreza//EyesNHands1//Visitor.py")
+(defvar pythonaddress "c://Users/seanw/OneDrive/Documents/vscode/Drivebus/VisiTor-Main/VisiTor.py")
 ;;==========================================================================================================================
-(defvar Direc "c://Users//Amirreza//EyesNHandsfiles")
+(defvar Direc "c://Users/seanw/OneDrive/Documents/vscode/Drivebus/VisiTor-Main/")
 (ql:quickload 'inferior-shell)
 (defmethod call-ShellCommand (command &optional arglist)
  (setq shell-request-list '())
