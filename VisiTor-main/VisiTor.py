@@ -31,6 +31,14 @@ if __name__ == "__main__":
             logging.info("Attempting to press key: %s", key)
             longkeypress(key)
             logging.info("Key press completed for key: %s", key)
+        elif args.Function == 'shortkeypress':
+            logging.info("Executing continuouspresskey function")
+            if args.arg2 is None or len(args.arg2) == 0:
+                args.arg2 = input('Please enter a key: ')
+            key = args.arg2[0] if isinstance(args.arg2, list) else args.arg2
+            logging.info("Attempting to press key: %s", key)
+            shortkeypress(key)
+            logging.info("Key press completed for key: %s", key)
         elif args.Function == 'click':
             click()
         elif args.Function == 'Keypress':

@@ -119,6 +119,17 @@ def longkeypress(key, duration=1):
         logging.exception(f"Error in longkeypress function: {e}")
         raise
 
+def shortkeypress(key, duration=0.0225):
+    try:
+        logging.info(f"Attempting to press key: {key}")
+        pyautogui.keyDown(key)
+        sleep(duration)
+        pyautogui.keyUp(key)
+        logging.info(f"Key press completed for: {key}")
+    except Exception as e:
+        logging.exception(f"Error in shortkeypress function: {e}")
+        raise
+
 # Click at a specific location of the screen
 def click():
 #If you want mouse down and up to take more time

@@ -155,6 +155,15 @@
   (call-ShellCommand command (list key))
   (act-r-output "continuwouspress a key! ~A" key))
 
+(defun shortkeypress (key)
+  (setf command "shortkeypress")
+  (call-ShellCommand command (list key))
+  (act-r-output "short key press of a key! ~A" key))
+
+(defun my-short-keypress (model key)
+  (declare (ignore model))
+  (shortkeypress key))
+
 (defun my-keyhold (model key)
   (declare (ignore model))
   (longkeypress key))
@@ -199,6 +208,8 @@
 (add-act-r-command "my-move-attention" 'what-is-on-screen "sth") ;; Good
 (monitor-act-r-command "move-attention" "my-move-attention") ;; Good
 (add-act-r-command "my-keyhold" 'my-keyhold "Keypress command")
+(add-act-r-command "my-short-keypress" 'my-short-keypress "Short keypress command")
+(monitor-act-r-command "output-key" "my-short-keypress")
 (monitor-act-r-command "output-key" "my-keyhold") ;;Good
 (add-act-r-command "my-whereis" 'whereis "sth")  ;;Define it
   (monitor-act-r-command "start-tracking" "my-whereis") ;;Good
@@ -415,8 +426,8 @@
    deviation =dev
 ==>
  !eval! (cond ((= =a -1) (longkeypress "w"))
-              ((= =c -1) (longkeypress "a"))
-              ((> =dev 300) (longkeypress "a"))
+              ((= =c -1) (my-short-keypress nil "a"))
+              ((> =dev 300) (my-short-keypress nil "a"))
               (t (longkeypress "w")))
  !eval! (longkeypress "w")             
  =goal>
@@ -431,7 +442,6 @@
            =dev)
 )
 
-
 (p choose-steer
  =goal>
    isa  drive
@@ -439,7 +449,7 @@
  ?manual>
    state  free
 ==>
- !eval! (longkeypress "a")
+ !eval! (my-short-keypress "a")
  =goal>
    state  perceive
  +visual-location>
