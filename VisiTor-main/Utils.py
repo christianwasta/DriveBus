@@ -108,7 +108,7 @@ def keypress(key, time = 0.1):
     pyautogui.keyUp(key)
 
 
-def longkeypress(key, duration=1):
+def longkeypress(key, duration=1.5):
     try:
         logging.info(f"Attempting to press key: {key}")
         pyautogui.keyDown(key)

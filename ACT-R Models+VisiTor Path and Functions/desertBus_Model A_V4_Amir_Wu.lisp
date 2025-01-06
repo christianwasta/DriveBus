@@ -295,9 +295,8 @@
       ISA         drive
       state       recheck
    =visual-location>
-      value      drivingCueTest
+      value       drivingCueTest
 ==>
-    +visual-location>  ; Request a new visual location
     =goal>
        state      choose-strategy
     !output! ("Rechecking environment")
@@ -307,12 +306,11 @@
    =goal>
       ISA        drive
       state      choose-strategy
-   ?visual>
-      state      free
 ==>
    =goal>
       item       "DrivingCueDanger"
-      state      find-danger)
+      state      find-danger
+   !output! ("Looking for danger cue"))
 
 (p finding-danger
    =goal>
@@ -415,7 +413,40 @@
  !output! ("Both cues missing, moving forward")
 )
 
-(p consider-ahead
+;;separate production rules because ACT-r needs 1 decision path per production
+(p left-missing-cue
+ =goal>
+   isa  drive
+   state consider-next
+ =imaginal>
+   isa encoding
+   danger-x -1
+==>
+ !eval! (longkeypress "w") ;;you can not hold down a key so this is my alternative.
+ =goal>
+   state  choose-strategy
+ !output! ("DrivingCueDanger cue missing")
+)
+
+;; if (c = -1) then short press a
+(p right-missing-cue
+ =goal>
+   isa  drive
+   state consider-next
+ =imaginal>
+   isa encoding
+   danger-x =a
+   center-x -1
+   - danger-x -1 ;;right cue is missing but left cue is seen. Without, the bus will drift left until other production kicks in
+==>
+ !eval! (my-short-keypress nil "a")
+ !eval! (longkeypress "w")
+ =goal>
+   state  choose-strategy
+ !output! ("drivingCueTest missing")
+)
+
+(p consider-large-deviation
  =goal>
    isa  drive
    state consider-next
@@ -424,22 +455,35 @@
    danger-x =a
    center-x =c
    deviation =dev
+   - danger-x -1  
+   - center-x -1
+   > deviation 300
 ==>
- !eval! (cond ((= =a -1) (longkeypress "w"))
-              ((= =c -1) (my-short-keypress nil "a"))
-              ((> =dev 300) (my-short-keypress nil "a"))
-              (t (longkeypress "w")))
- !eval! (longkeypress "w")             
+ !eval! (longkeypress "w")
+ !eval! (my-short-keypress nil "a")
  =goal>
-   state  perceive
- +visual-location>
-   isa  visual-location
- !output! ("Decision made: ~A, deviation: ~D" 
-           (cond ((= =a -1) "move forward (left cue missing)")
-                 ((= =c -1) "steer left (right cue missing)")
-                 ((> =dev 300) "steer left")
-                 (t "move forward"))
-           =dev)
+   state  choose-strategy
+ !output! ("large deviation: ~D" =dev)
+)
+
+;; Handle default case (continue forward)
+(p continue-forward
+ =goal>
+   isa  drive
+   state consider-next
+ =imaginal>
+   isa encoding
+   danger-x =a
+   center-x =c
+   deviation =dev
+   - danger-x -1
+   - center-x -1
+   <= deviation 300
+==>
+ !eval! (longkeypress "w")
+ =goal>
+   state  choose-strategy
+ !output! ("Moving forward")
 )
 
 (p choose-steer
@@ -464,7 +508,6 @@
 ==>
    =goal>
       state       choose-strategy
-   !output!       ("Continuing cycle - choosing new strategy")
-)
+   !output!       ("Continuing cycle - choosing new strategy"))
 )
 ;;Amir: Overall, great code. You have made some huge progress! I'm impressed.
